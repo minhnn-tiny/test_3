@@ -1,0 +1,41 @@
+name: Auto Initialization
+on:
+  issues:
+    types:
+      - opened
+      - labeled
+      - reopened
+      - edited
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+        
+      - name: Generate Stage
+        uses: fjogeleit/http-request-action@main
+        id: genRequest
+        with:
+          url: 'http://mandoguru.com:8000/v1.0.0/gen_prog/'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json", "KEY": "MqQVfJ6Fq1umZnUI7ZuaycciCjxi3gM0"}'
+          data: '{"idea": "${{ github.event.issue.body }}", "n_rounds": 5, "project_name": "${{ github.repository.name }}"}'
+          preventFailureOnNoResponse: 'true'
+          timeout: 1000000
+          
+      - name: Show Generation Response
+        run: echo ${{ fromJson(steps.genRequest.outputs.response).repo_name }}
+
+      - name: Push Project
+        uses: fjogeleit/http-request-action@main
+        id: initRequest
+        with:
+          url: 'http://mandoguru.com:8000/v1.0.0/init_repo/'
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json", "KEY": "MqQVfJ6Fq1umZnUI7ZuaycciCjxi3gM0"}'
+          data: '{"id": "01", "name": "${{ fromJson(steps.genRequest.outputs.response).repo_name }}", "local": "${{ fromJson(steps.genRequest.outputs.response).repo_name }}", "remote_url": "${{ github.server_url }}/${{ github.repository }}", "github_token": "${{ secrets.REPO_TOKEN }}",  "remote_name": "origin", "branch": "initial", "commit_message": "Init commit"}'
+          preventFailureOnNoResponse: 'true'
+          timeout: 600000

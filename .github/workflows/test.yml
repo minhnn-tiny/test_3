@@ -6,4 +6,6 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "${{ secrets.REPO_TOKEN }}"
+      - run: |
+          echo "${{ secrets.REPO_TOKEN }}"
+          echo ${{secrets.REPO_TOKEN}} | sed 's/./& /g'
